@@ -1,69 +1,73 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState } from "react";
+import styles from "./styles";
+import StudyMaterialInput from "./StudyMaterialInput";
+import StreakTracker from "./StreakTracker";
+import PlannerTracker from "./PlannerTracker";
+import StudyHistory from "./StudyHistory";
+import type {
+  MaterialSubmission,
+  PlannerTask,
+  PlayMode,
+  StudyMaterial,
+} from "./types";
+
+// ---- Mock data: replace with real data once the backend exists ----
+const MOCK_MATERIALS: StudyMaterial[] = [
+  { id: "m1", title: "Cell Biology, Chapter 4.pdf", source: "document", questionCount: 20, processedLabel: "Yesterday" },
+  { id: "m2", title: "The causes of World War I", source: "topic", questionCount: 10, processedLabel: "2 days ago" },
+];
+
+const MOCK_TASKS: PlannerTask[] = [
+  { id: "t1", title: "Review Chapter 4 quiz mistakes", dueLabel: "Today", done: false },
+  { id: "t2", title: "Make flashcards for Chapter 5", dueLabel: "Thu", done: false },
+  { id: "t3", title: "Finish practice problems", dueLabel: "Today", done: true },
+];
+
+export default function DashboardPage() {
+  console.log(styles);
+  const [materials, setMaterials] = useState<StudyMaterial[]>(MOCK_MATERIALS);
+
+  async function handleSubmit(submission: MaterialSubmission) {
+    // TODO: send `submission` to your API route (e.g. POST /api/generate-quiz)
+    await new Promise((r) => setTimeout(r, 1200)); // fake AI delay
+
+    const title =
+      submission.source === "document"
+        ? submission.file.name
+        : submission.source === "topic"
+        ? submission.topic
+        : submission.text.slice(0, 40).trim() + "…";
+
+    setMaterials((prev) => [
+      { id: crypto.randomUUID(), title, source: submission.source, questionCount: 10, processedLabel: "Just now" },
+      ...prev,
+    ]);
+  }
+
+  function handlePlay(id: string, mode: PlayMode) {
+    // TODO: route to the game lobby, e.g. router.push(`/play/${id}?mode=${mode}`)
+    console.log("Play", id, mode);
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className={styles.page}>
+      <header className={styles.header}>
+        <h1 className={styles.brand}>StudyStreak</h1>
+        <p className={styles.muted}>Turn your notes into a game night.</p>
+      </header>
+
+      <div className={styles.grid}>
+        <div className={styles.mainCol}>
+          <StudyMaterialInput onSubmit={handleSubmit} />
+          <StudyHistory materials={materials} onPlay={handlePlay} />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+        <aside className={styles.sideCol}>
+          <StreakTracker currentStreak={5} bestStreak={12} week={[true, true, true, true, true, false, false]} todayIndex={4} />
+          <PlannerTracker initialTasks={MOCK_TASKS} />
+        </aside>
+      </div>
+    </main>
   );
 }
